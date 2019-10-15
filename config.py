@@ -16,7 +16,7 @@ def init():
         os.mkdirs(replay)
 init()
 
-non_neural_model_list = ['random', 'greedy-p0', 'greedy-p1', 'greedy-p2', 'ab-p0', 'ab-p1', 'ab-p2']
+non_neural_model_list = ['random', 'greedy-p0', 'greedy-p1', 'greedy-p2', 'minmax-p0', 'minmax-p1', 'minmax-p2', 'ab-p0', 'ab-p1', 'ab-p2', 'sg']
 neural_model_list = ['fcn']
 model_list = non_neural_model_list + neural_model_list
 max_d = 1e8
@@ -28,7 +28,7 @@ n_train_process = 3
 learning_rate = 0.002
 print_interval = 20
 gamma = 0.98
-test_episode = 100000
+test_episode = 1000
 test_sleep_time = 4
-train_episode = int(test_episode * test_sleep_time / print_interval * 40)
+#train_episode = int(test_episode * test_sleep_time / print_interval * 40)
 self_play_copy_episode = 1000

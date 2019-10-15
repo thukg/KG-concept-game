@@ -1,6 +1,8 @@
 from model.random_model import RandomModel
 from model.greedy_model import GreedyModel
+from model.min_max_model import MinMaxModel
 from model.alpha_beta_model import AlphaBetaModel
+from model.sprague_grundy_model import SpragueGrundyModel
 from model.fully_connected_network_model import FCNModel
 import config
 
@@ -16,12 +18,20 @@ def name_to_model(s, env):
         model = GreedyModel(env, 1)
     if s == 'greedy-p2':
         model = GreedyModel(env, 2)
+    if s == 'minmax-p0':
+        model = MinMaxModel(env, 0)
+    if s == 'minmax-p1':
+        model = MinMaxModel(env, 1)
+    if s == 'minmax-p2':
+        model = MinMaxModel(env, 2)
     if s == 'ab-p0':
         model = AlphaBetaModel(env, 0)
     if s == 'ab-p1':
         model = AlphaBetaModel(env, 1)
     if s == 'ab-p2':
         model = AlphaBetaModel(env, 2)
+    if s == 'sg':
+        model = SpragueGrundyModel(env)
     if s == 'fcn':
         model = FCNModel(env)
     model.name = s

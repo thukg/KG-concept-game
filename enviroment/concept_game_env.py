@@ -38,13 +38,13 @@ class ConceptGameEnv(gym.Env):
         self.history = []
         self.player = 1
         self.done = False
-        obs = [self.player, self.labels]
+        obs = [self.player, self.labels.copy()]
         return obs
     
     def step(self, a):
         assert not self.done and a in range(self.n)
         round = len(self.history)
-        obs = [self.player, self.labels]
+        obs = [self.player, self.labels.copy()]
         if self.labels[a] != 0:
             self.done = True
             return obs, -1, True, {'message': 'illegal action, repeated occupation'}
@@ -57,7 +57,7 @@ class ConceptGameEnv(gym.Env):
         self.refine_history.append(a)
         self.history.append({'round': round, 'player': self.player, 'action': a})
         self.player = 3 - self.player
-        obs = [self.player, self.labels]
+        obs = [self.player, self.labels.copy()]
         return obs, 0, False, {'message': 'action accepted'}
     
     def to_nn_input(self, obs):

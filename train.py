@@ -9,14 +9,19 @@ import model.model_api as model_api
 import config
 import time
 
-def train_sub(id, env, model1, model2):
+def train_sub(id, sig, env, model1, model2):
     local_model = model_api.name_to_model(model1.name, env)
     local_model.load_state_dict(model1.state_dict())
     if model2 is None:
         self_play_model = model_api.name_to_model(model1.name, env)
         self_play_model.load_state_dict(model1.state_dict())
     optimizer = optim.Adam(model1.parameters(), lr=config.learning_rate)
-    for episode in range(config.train_episode):
+    episode = -1
+    while True:
+        episode += 1
+        sig[id] += 1
+        if sig[0]:
+            break
         done = False
         s = env.reset()
         s_lst, a_lst, r_lst = [], [], []
@@ -63,7 +68,7 @@ def train_sub(id, env, model1, model2):
                 self_play_model.load_state_dict(model1.state_dict())
     print("Training process {} reached maximum episode.".format(id))
 
-def test_sub(env, model1, model2):
+def test_sub(sig, env, model1, model2):
     score = 0.0
     tot_step = 0
     for episode in range(config.test_episode):
@@ -88,22 +93,25 @@ def test_sub(env, model1, model2):
             step += 1
         if r_last == 0:
             score += 1.0
-        tot_step += step
+        tot_step += step - 1
         if episode % config.print_interval == config.print_interval-1:
-            print("# of episode :{}, avg score : {:.1f}, avg step: {:.1f}".format(episode+1, score / config.print_interval, tot_step / config.print_interval))
+            print("test_sub episode :{}, avg score : {:.1f}, avg legal step: {:.1f}, train_sub episodes: {}".format(episode+1, score / config.print_interval, tot_step / config.print_interval, sig[1:].numpy()))
             score = 0.0
             tot_step = 0
             time.sleep(config.test_sleep_time)
+    sig[0] = 1
 
 def train_main(env_config, model1, model2=None): # None for self-play
+    sig = torch.Tensor([0]*(config.n_train_process+1)) # stop_sig from test_sub, episode numbers from train_sub
+    sig.share_memory_()
     model1.share_memory()
     processes = []
     for id in range(config.n_train_process+1):
         env = ConceptGameEnv(env_config)
         if id == 0:
-            p = mp.Process(target=test_sub, args=(env, model1, model2))
+            p = mp.Process(target=test_sub, args=(sig, env, model1, model2))
         else:
-            p = mp.Process(target=train_sub, args=(id, env, model1, model2))
+            p = mp.Process(target=train_sub, args=(id, sig, env, model1, model2))
         p.start()
         processes.append(p)
     for p in processes:
@@ -123,4 +131,4 @@ def main(env_config, model1_name, model2_name=None):
 
 if __name__ == '__main__':
     env_config = {'name': 'test.txt', 'parser': concept_game_api.sample_parser}
-    main(env_config, 'fcn', 'greedy-p0')
+    main(env_config, 'fcn', 'ab-p0')

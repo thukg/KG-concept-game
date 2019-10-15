@@ -18,20 +18,20 @@ def prepare(env_config, model1_name, model2_name, model1_path, model2_path):
         model2.load_state_dict(torch.load(model2_path))
     return env, model1, model2
 
-def test(env, model1, model2, episode):
+def test(env, model1, model2, round, play_first):
     done = False
     s = env.reset()
     step = 0
     while not done:
-        step_model = model1 if step % 2 == episode % 2 else model2
+        step_model = model1 if step % 2 == play_first-1 else model2
         if step_model.nn_model:
             a = step_model.forward(torch.from_numpy(env.to_nn_input(s)).float())
         else:
             a = step_model.forward(s)
         s, r, done, info = env.step(a)
         step += 1
-    res = play_info.PlayInfo(1 if step_model == model2 else 2, episode % 2 + 1, env.history)
-    print('episode {}, winner {}'.format(episode, res.winner))
+    res = play_info.PlayInfo(1 if step_model == model2 else 2, play_first, env.history)  # whoever makes the last illegal step, the opponent win the game
+    print('round {}, play first {}, winner {}'.format(round, play_first, res.winner))
     return res
 
 def test_main(env_config, model1_name, model2_name, rounds=1, random_config=None, model1_path=None, model2_path=None):
@@ -43,12 +43,12 @@ def test_main(env_config, model1_name, model2_name, rounds=1, random_config=None
         if random_config:
             create_graph(random_config)
             env, model1, model2 = prepare(env_config, model1_name, model2_name, model1_path, model2_path)
-        res.append(test(env, model1, model2, r))
+        res.append(test(env, model1, model2, r, 1))
+        res.append(test(env, model1, model2, r, 2))
     play_info.play_info_stat(res)
 
 if __name__ == '__main__':
     graph_name = 'test.txt'
     env_config = {'name': graph_name, 'parser': concept_game_api.sample_parser}
     random_config={'n': 20, 'm': 26, 'name': graph_name}
-    test_main(env_config, 'greedy-p0', 'greedy-p0', rounds=10, random_config=random_config)
-    #create_graph(50, 1000, 'test.txt')
+    test_main(env_config, 'ab-p0', 'ab-p1', rounds=10, random_config=random_config)
